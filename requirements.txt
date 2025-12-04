@@ -1,0 +1,8 @@
+Flask==3.0.3
+gunicorn==23.0.0
+PyMySQL==1.1.1
+python-dotenv==1.0.1
+Flask-Login==0.6.3
+Flask-SQLAlchemy==3.0.5
+Werkzeug==3.0.4
+razorpay==1.4.1
