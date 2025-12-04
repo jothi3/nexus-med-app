@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEXUS MED • Cyber Pharmacy</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?    family=Rajdhani:wght@600;700&family=Exo+2:wght@400;700&display=swap" rel="stylesheet"> 
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+  <div class="matrix-bg"></div>
+  <div class="particles"></div>
+  <div class="scanline"></div>
+
+  <div class="top-bar">
+    <div class="ticker">FREE Delivery Above ₹299 • 100% Genuine • 24×7 Support</div>
+  </div>
+
+  <header class="header">
+    <div class="main-header">
+      <h1 class="logo glitch" data-text="NEXUSMED">NEXUS<span>MED</span></h1>
+      <div class="location" id="userLocation">
+        <i class="fas fa-location-crosshairs"></i> Detecting location...
+      </div>
+      <div class="search-bar">
+        <input type="text" id="mainSearch" placeholder="Search medicines or pharmacy..." autocomplete="off"/>
+        <button class="search-btn" onclick="searchNow()"><i class="fas fa-search"></i></button>
+      </div>
+      <div class="header-actions">
+        <div class="cart-icon" onclick="toggleCart()">
+          <i class="fas fa-shopping-bag"></i>
+          <span id="cartCount">{{ count }}</span>
+        </div>
+        <button id="loginBtn" class="btn-cyber" onclick="openModal()">Login / Sign Up</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <h2 class="neon-title">SHOPS NEAR ME</h2>
+    <div class="shops-grid">
+      {% for shop in shops %}
+      <div class="shop-card">
+        <div class="shop-header"><h3>{{ shop }}</h3><p>4.8 ★ • Open Now • 1.2 km</p></div>
+        <div style="padding:20px;text-align:center;"><button class="btn-cyber">Enter Store</button></div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <h2 class="neon-title">TRENDING MEDICINES</h2>
+    <div class="products-grid">
+      {% for med in medicines %}
+      <div class="product-card">
+        <img src="https://i.imgur.com/0L9aP8k.png" alt="{{ med.name }}">
+        <h3>{{ med.name }}</h3>
+        <div class="price">₹{{ med.price }}</div>
+        <button class="btn-cyber" onclick="addToCart('{{ med.name }}', {{ med.price }})">Add to Cart</button>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+
+  <!-- Cart Sidebar -->
+  <div id="cartSidebar" class="cart-sidebar">
+    <div class="cart-header">
+      <h2>MY CART (<span id="cartItemsCount">{{ count }}</span>)</h2>
+      <span class="close-cart" onclick="toggleCart()">×</span>
+    </div>
+
+    <div id="cartItems">
+      {% if cart %}
+        {% for item in cart %}
+        <div style="padding:15px 0;border-bottom:1px solid #444;display:flex;justify-content:space-between;align-items:center;">
+          <div><strong style="color:#ff6bff;">{{ item.name }}</strong><br><small style="color:#aaa;">₹{{ item.price }} × {{ item.qty|default(1) }}</small></div>
+          <button onclick="removeItem('{{ item.name }}')" style="background:none;border:none;color:#ff3366;font-size:26px;cursor:pointer;">×</button>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="empty">Your cart is empty</p>
+      {% endif %}
+    </div>
+
+    <div class="cart-total">Total: ₹<span id="cartTotal">{{ total }}</span></div>
+
+    <!-- ⭐ ADDED Razorpay Button EXACTLY AS YOU ASKED -->
+    <button class="btn-cyber checkout" onclick="payWithRazorpay()">
+      PAY WITH RAZORPAY → ₹<span id="cartTotal">{{ total }}</span>
+    </button>
+
+  </div>
+
+  <!-- Sign In / Sign Up Pop-up -->
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal()">×</span>
+      <h2 class="glitch-title" data-text="ACCESS SYSTEM">ACCESS SYSTEM</h2>
+      <div class="tabs">
+        <button class="tablink active" onclick="openTab(event,'Login')">LOGIN</button>
+        <button class="tablink" onclick="openTab(event,'Signup')">SIGN UP</button>
+      </div>
+      <div id="Login" class="tabcontent active">
+        <input type="text" placeholder="Mobile Number" />
+        <button class="btn-cyber">LOGIN</button>
+      </div>
+      <div id="Signup" class="tabcontent">
+        <input type="text" placeholder="Full Name" />
+        <input type="tel" placeholder="Mobile Number" />
+        <button class="btn-cyber">CREATE ACCOUNT</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  function toggleCart() { document.getElementById("cartSidebar").classList.toggle("open"); }
+  function openModal() { document.getElementById("authModal").style.display = "flex"; }
+  function closeModal() { document.getElementById("authModal").style.display = "none"; }
+  function openTab(e, tab) {
+    document.querySelectorAll(".tabcontent").forEach(t => t.style.display = "none");
+    document.querySelectorAll(".tablink").forEach(t => t.classList.remove("active"));
+    document.getElementById(tab).style.display = "block";
+    e.currentTarget.classList.add("active");
+  }
+  function addToCart(name, price) {
+    fetch('/add', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name, price})})
+    .then(() => location.reload());
+  }
+  function removeItem(name) { if (confirm("Remove?")) location.href = "/remove?name=" + name; }
+  function searchNow() {
+    const q = document.getElementById("mainSearch").value.toLowerCase();
+    document.querySelectorAll('.product-card').forEach(c => {
+      c.style.display = c.querySelector('h3').textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+  // Live Location
+  navigator.geolocation.getCurrentPosition(p => {
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${p.coords.latitude}&lon=${p.coords.longitude}&format=json`)
+      .then(r => r.json())
+      .then(d => {
+        const city = d.address.city || d.address.town || "Your Area";
+        document.getElementById("userLocation").innerHTML = `<i class="fas fa-location-crosshairs"></i> ${city} • 25–45 min`;
+      });
+  });
+  </script>
+</body>
+</html>
